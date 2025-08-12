@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tattva Calculator</title>
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRhdHR2YSBDYWxjdWxhdG9yIiwKICAic2hvcnRfbmFtZSI6ICJUYXR0dmEiLAogICJzdGFydF91cmwiOiAiLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgInRoZW1lX2NvbG9yIjogIiMxZTEyMzQiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwZjA3MjciLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSGRwWkhSb1BTSXlOVFlpSUdobGFXZG9kRDBpTWpVMklpQjJhV1YzUW05NEBTSXdJREFnTWpVMklESTFOaUkrUEdOcGNtTnNaU0JqZUQwaU1USTRJaUI2ZVQwaU1USTRJaUJ5UFNJeE1EQWlJR1pwYkd3OUlpTTJNVGs1TlNSaUx6NDhMMk5wY21Oc1pUNDhMMk4yWnorOCIsCiAgICAgICJzaXplcyI6ICIyNTZ4MjU2IiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICAgIH0KICBdCn0K">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0727 0%, #1e1234 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #61f595, #4cc9f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .location-info {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .get-location-btn {
+            background: linear-gradient(45deg, #61f595, #4cc9f0);
+            color: #0f0727;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+
+        .get-location-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .manual-input {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 15px;
+        }
+
+        .time-input {
+            padding: 8px 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: #61f595;
+            box-shadow: 0 0 10px rgba(97, 245, 149, 0.3);
+        }
+
+        .current-tattva {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .current-tattva h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .tattva-display {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .main-tattva, .sub-tattva {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .schedule {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .schedule h3 {
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.3rem;
+        }
+
+        .schedule-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            transition: transform 0.2s;
+        }
+
+        .schedule-item:hover {
+            transform: translateX(5px);
+        }
+
+        .schedule-item.current {
+            border: 2px solid #61f595;
+            box-shadow: 0 0 20px rgba(97, 245, 149, 0.3);
+        }
+
+        .time-range {
+            min-width: 140px;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        .tattva-info {
+            flex: 1;
+            margin-left: 15px;
+        }
+
+        .tattva-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .sub-tattva-name {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 3px;
+        }
+
+        /* Tattva colors */
+        .akasha { background-color: #4c1d95; }
+        .vayu { background-color: #0d9488; }
+        .tejas { background-color: #dc2626; }
+        .apas { background-color: #2563eb; }
+        .prithvi { background-color: #eab308; }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .legend-item {
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .error {
+            color: #ef4444;
+            text-align: center;
+            padding: 20px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.1rem;
+            color: #4cc9f0;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .schedule-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .tattva-info {
+                margin-left: 0;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>☯ Tattva Calculator</h1>
+            <p>Align your actions with elemental energies</p>
+        </div>
+
+        <div class="location-info" id="locationInfo">
+            <button class="get-location-btn" onclick="getLocation()">📍 Get My Location</button>
+            <div class="manual-input">
+                <p style="margin-bottom: 10px;">Or enter sunrise time manually:</p>
+                <input type="time" id="sunriseInput" class="time-input">
+                <button class="get-location-btn" onclick="setManualSunrise()">Set Sunrise</button>
+            </div>
+            <div id="locationDisplay"></div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item akasha">Akasha</div>
+            <div class="legend-item vayu">Vayu</div>
+            <div class="legend-item tejas">Tejas</div>
+            <div class="legend-item apas">Apas</div>
+            <div class="legend-item prithvi">Prithvi</div>
+        </div>
+
+        <div class="current-tattva" id="currentTattva" style="display: none;">
+            <h2>Current Energy</h2>
+            <div class="tattva-display" id="currentDisplay"></div>
+            <div id="timeRemaining"></div>
+        </div>
+
+        <div class="schedule" id="schedule" style="display: none;">
+            <h3>Today's Tattva Schedule</h3>
+            <div id="scheduleList"></div>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">Calculating tattvas...</div>
+        <div id="error" class="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        const TATTVAS = [
+            { name: 'Akasha', class: 'akasha' },
+            { name: 'Vayu', class: 'vayu' },
+            { name: 'Tejas', class: 'tejas' },
+            { name: 'Apas', class: 'apas' },
+            { name: 'Prithvi', class: 'prithvi' }
+        ];
+
+        const TATTVA_DURATION = 24 * 60 * 1000; // 24 minutes in milliseconds
+        const SUB_TATTVA_DURATION = TATTVA_DURATION / 5; // 4.8 minutes
+
+        let currentLocation = null;
+        let sunriseTime = null;
+        let scheduleData = [];
+        let updateInterval = null;
+
+        function showElement(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function hideElement(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            showElement('error');
+            hideElement('loading');
+        }
+
+        function getLocation() {
+            if (!navigator.geolocation) {
+                showError('Geolocation is not supported by this browser.');
+                return;
+            }
+
+            showElement('loading');
+            hideElement('error');
+
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    currentLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    calculateSunrise();
+                },
+                error => {
+                    hideElement('loading');
+                    showError('Unable to get your location. Please ensure location services are enabled.');
+                }
+            );
+        }
+
+        function setManualSunrise() {
+            const timeInput = document.getElementById('sunriseInput');
+            if (!timeInput.value) {
+                showError('Please enter a sunrise time.');
+                return;
+            }
+
+            showElement('loading');
+            hideElement('error');
+
+            // Create sunrise time for today with the entered time
+            const today = new Date();
+            const [hours, minutes] = timeInput.value.split(':');
+            sunriseTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
+                                 parseInt(hours), parseInt(minutes), 0);
+
+            document.getElementById('locationDisplay').innerHTML = `
+                <p>🌅 Sunrise set to: ${sunriseTime.toLocaleTimeString()}</p>
+                <p>Manual entry mode</p>
+            `;
+            
+            initializeSchedule();
+        }
+
+        function calculateSunrise() {
+            const now = new Date();
+            const sunrise = getSunrise(currentLocation.lat, currentLocation.lng, now);
+            sunriseTime = sunrise;
+            
+            document.getElementById('locationDisplay').innerHTML = `
+                <p>📍 ${currentLocation.lat.toFixed(2)}, ${currentLocation.lng.toFixed(2)}</p>
+                <p>🌅 Today's sunrise: ${sunrise.toLocaleTimeString()}</p>
+            `;
+            
+            initializeSchedule();
+        }
+
+        function initializeSchedule() {
+            generateSchedule();
+            updateCurrentTattva();
+            hideElement('loading');
+            showElement('currentTattva');
+            showElement('schedule');
+
+            // Clear any existing interval and start new one
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+            updateInterval = setInterval(updateCurrentTattva, 60000);
+        }
+
+        function getSunrise(lat, lng, date) {
+            // Simplified sunrise calculation
+            const day = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+            const P = Math.asin(0.39795 * Math.cos(0.98563 * (day - 173) * Math.PI / 180));
+            const argument = (Math.sin(0.01454) + Math.sin(lat * Math.PI / 180) * Math.sin(P)) / 
+                           (Math.cos(lat * Math.PI / 180) * Math.cos(P));
+            const t = 12 - Math.acos(Math.max(-1, Math.min(1, argument))) * 180 / Math.PI / 15;
+            
+            const sunrise = new Date(date);
+            sunrise.setHours(Math.floor(t), (t % 1) * 60, 0, 0);
+            return sunrise;
+        }
+
+        function generateSchedule() {
+            scheduleData = [];
+            let currentTime = new Date(sunriseTime);
+            
+            for (let cycle = 0; cycle < 60; cycle++) { // Generate 60 cycles (24 hours)
+                const mainTattvaIndex = cycle % 5;
+                const mainTattva = TATTVAS[mainTattvaIndex];
+                
+                for (let subIndex = 0; subIndex < 5; subIndex++) {
+                    const subTattva = TATTVAS[subIndex];
+                    const startTime = new Date(currentTime);
+                    const endTime = new Date(currentTime.getTime() + SUB_TATTVA_DURATION);
+                    
+                    scheduleData.push({
+                        startTime,
+                        endTime,
+                        mainTattva,
+                        subTattva,
+                        mainTattvaIndex,
+                        subTattvaIndex: subIndex
+                    });
+                    
+                    currentTime = new Date(endTime);
+                }
+            }
+            
+            renderSchedule();
+        }
+
+        function renderSchedule() {
+            const now = new Date();
+            const scheduleList = document.getElementById('scheduleList');
+            
+            // Find current item
+            const currentIndex = scheduleData.findIndex(item => 
+                now >= item.startTime && now < item.endTime
+            );
+            
+            // Show from current time until end of day
+            const startIndex = Math.max(0, currentIndex >= 0 ? currentIndex : 0);
+            const endOfDay = new Date(now);
+            endOfDay.setHours(23, 59, 59, 999);
+            
+            // Find items until end of day
+            let endIndex = scheduleData.findIndex(item => item.startTime > endOfDay);
+            if (endIndex === -1) {
+                endIndex = Math.min(scheduleData.length, startIndex + 60);
+            }
+            
+            scheduleList.innerHTML = '';
+            
+            for (let i = startIndex; i < endIndex; i++) {
+                const item = scheduleData[i];
+                const div = document.createElement('div');
+                div.className = `schedule-item ${item.mainTattva.class}`;
+                
+                if (i === currentIndex) {
+                    div.classList.add('current');
+                }
+                
+                div.innerHTML = `
+                    <div class="time-range">
+                        ${item.startTime.toLocaleTimeString()} - ${item.endTime.toLocaleTimeString()}
+                    </div>
+                    <div class="tattva-info">
+                        <div class="tattva-name">${item.mainTattva.name}</div>
+                        <div class="sub-tattva-name">↳ ${item.subTattva.name} sub-period</div>
+                    </div>
+                `;
+                
+                scheduleList.appendChild(div);
+            }
+        }
+
+        function updateCurrentTattva() {
+            const now = new Date();
+            const currentItem = scheduleData.find(item => 
+                now >= item.startTime && now < item.endTime
+            );
+            
+            if (!currentItem) return;
+            
+            const display = document.getElementById('currentDisplay');
+            display.innerHTML = `
+                <div class="main-tattva ${currentItem.mainTattva.class}">
+                    Main: ${currentItem.mainTattva.name}
+                </div>
+                <div class="sub-tattva ${currentItem.subTattva.class}">
+                    Sub: ${currentItem.subTattva.name}
+                </div>
+            `;
+            
+            const timeRemaining = currentItem.endTime - now;
+            const minutes = Math.floor(timeRemaining / 60000);
+            const seconds = Math.floor((timeRemaining % 60000) / 1000);
+            
+            document.getElementById('timeRemaining').textContent = 
+                `Time remaining: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            renderSchedule(); // Update the schedule to highlight current item
+        }
+
+        // Register service worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJywgZXZlbnQgPT4gewogIGV2ZW50LndhaXRVbnRpbChzZWxmLnNraXBXYWl0aW5nKCkpOwp9KTsKCnNlbGYuYWRkRXZlbnRMaXN0ZW5lcignYWN0aXZhdGUnLCBldmVudCA9PiB7CiAgZXZlbnQud2FpdFVudGlsKHNlbGYuY2xpZW50cy5jbGFpbSgpKTsKfSk7')
+                .catch(() => {
+                    // Service worker registration failed, but the app will still work
+                });
+            });
+        }
+    </script>
+</body>
+</html>
