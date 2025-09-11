@@ -305,6 +305,8 @@
         }
 
         function getLocation() {
+            console.log('getLocation called');
+            
             if (!navigator.geolocation) {
                 showError('Geolocation is not supported by this browser.');
                 return;
@@ -312,19 +314,56 @@
 
             showElement('loading');
             hideElement('error');
+            console.log('Requesting location...');
+
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000
+            };
 
             navigator.geolocation.getCurrentPosition(
                 position => {
+                    console.log('Location received:', position.coords);
                     currentLocation = {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
                     };
-                    calculateSunrise();
+                    
+                    // Skip API calls for now - use fallback calculation directly
+                    sunriseTime = calculateSunriseFallback(currentLocation.lat, currentLocation.lng);
+                    
+                    document.getElementById('locationDisplay').innerHTML = `
+                        <p>📍 ${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}</p>
+                        <p>🌅 Today's sunrise: ${sunriseTime.toLocaleTimeString()}</p>
+                        <p><small>Calculated sunrise time</small></p>
+                    `;
+                    
+                    initializeSchedule();
                 },
                 error => {
+                    console.error('Geolocation error:', error);
                     hideElement('loading');
-                    showError('Unable to get your location. Please ensure location services are enabled.');
-                }
+                    let errorMessage = '';
+                    
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Location access denied. Please enable location services and try again.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Location information is unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Location request timed out.';
+                            break;
+                        default:
+                            errorMessage = 'An unknown error occurred while retrieving location.';
+                            break;
+                    }
+                    
+                    showError(errorMessage);
+                },
+                options
             );
         }
 
@@ -379,18 +418,7 @@
             updateInterval = setInterval(updateCurrentTattva, 60000);
         }
 
-        function getSunrise(lat, lng, date) {
-            // Simplified sunrise calculation
-            const day = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
-            const P = Math.asin(0.39795 * Math.cos(0.98563 * (day - 173) * Math.PI / 180));
-            const argument = (Math.sin(0.01454) + Math.sin(lat * Math.PI / 180) * Math.sin(P)) / 
-                           (Math.cos(lat * Math.PI / 180) * Math.cos(P));
-            const t = 12 - Math.acos(Math.max(-1, Math.min(1, argument))) * 180 / Math.PI / 15;
-            
-            const sunrise = new Date(date);
-            sunrise.setHours(Math.floor(t), (t % 1) * 60, 0, 0);
-            return sunrise;
-        }
+
 
         function generateSchedule() {
             scheduleData = [];
