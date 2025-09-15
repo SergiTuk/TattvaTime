@@ -304,67 +304,117 @@
             hideElement('loading');
         }
 
+        // Utility functions for sunrise calculation
+        function toRadians(degrees) {
+            return degrees * (Math.PI / 180);
+        }
+        
+        function toDegrees(radians) {
+            return radians * (180 / Math.PI);
+        }
+
+        function getDayOfYear(date) {
+            const start = new Date(date.getFullYear(), 0, 0);
+            const diff = date - start;
+            return Math.floor(diff / (1000 * 60 * 60 * 24));
+        }
+
+        function calculateSunriseForLocation(lat, lng) {
+    const now = new Date();
+    const dayOfYear = Math.floor(
+        (now - new Date(now.getFullYear(), 0, 0)) / 86400000
+    );
+
+    // Convert degrees to radians
+    const rad = Math.PI / 180;
+    const deg = 180 / Math.PI;
+
+    // Mean anomaly of the Sun
+    const M = (0.9856 * dayOfYear - 3.289) % 360;
+
+    // True longitude of the Sun
+    const L = (M + 1.916 * Math.sin(M * rad) + 0.020 * Math.sin(2 * M * rad) + 282.634) % 360;
+
+    // Right ascension
+    let RA = Math.atan(0.91764 * Math.tan(L * rad)) * deg;
+    RA = (RA + 360) % 360;
+
+    // Quadrant adjustment
+    const Lquadrant  = Math.floor(L / 90) * 90;
+    const RAquadrant = Math.floor(RA / 90) * 90;
+    RA = RA + (Lquadrant - RAquadrant);
+    RA = RA / 15;
+
+    // Declination
+    const sinDec = 0.39782 * Math.sin(L * rad);
+    const cosDec = Math.cos(Math.asin(sinDec));
+
+    // Sun’s local hour angle for zenith = 90.833 (accounting for refraction)
+    const cosH = (Math.cos(90.833 * rad) - (sinDec * Math.sin(lat * rad))) / (cosDec * Math.cos(lat * rad));
+    if (cosH > 1) throw new Error("No sunrise at this location/date");
+    if (cosH < -1) throw new Error("No sunset at this location/date");
+
+    // Local hour angle in hours
+    const H = (360 - Math.acos(cosH) * deg) / 15;
+
+    // Local mean time of rising
+    const T = H + RA - (0.06571 * dayOfYear) - 6.622;
+
+    // Adjust to UTC
+    const UT = (T - (lng / 15) + 24) % 24;
+
+    // Convert to local time
+    const tzOffset = -now.getTimezoneOffset() / 60; // e.g. 3 for Romania in summer
+    const localT = (UT + tzOffset + 24) % 24;
+
+    const hours = Math.floor(localT);
+    const minutes = Math.round((localT - hours) * 60);
+
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
+}
+
+
         function getLocation() {
-            console.log('getLocation called');
+            console.log('getLocation function started');
+            
+            hideElement('error');
             
             if (!navigator.geolocation) {
+                console.log('Geolocation not supported');
                 showError('Geolocation is not supported by this browser.');
                 return;
             }
 
+            console.log('Geolocation is supported, showing loading');
             showElement('loading');
-            hideElement('error');
-            console.log('Requesting location...');
 
-            const options = {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 60000
-            };
+   navigator.geolocation.getCurrentPosition(
+    function(position) {
+        currentLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+        };
 
-            navigator.geolocation.getCurrentPosition(
-                position => {
-                    console.log('Location received:', position.coords);
-                    currentLocation = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    
-                    // Skip API calls for now - use fallback calculation directly
-                    sunriseTime = calculateSunriseFallback(currentLocation.lat, currentLocation.lng);
-                    
-                    document.getElementById('locationDisplay').innerHTML = `
-                        <p>📍 ${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}</p>
-                        <p>🌅 Today's sunrise: ${sunriseTime.toLocaleTimeString()}</p>
-                        <p><small>Calculated sunrise time</small></p>
-                    `;
-                    
-                    initializeSchedule();
-                },
-                error => {
-                    console.error('Geolocation error:', error);
-                    hideElement('loading');
-                    let errorMessage = '';
-                    
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            errorMessage = 'Location access denied. Please enable location services and try again.';
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            errorMessage = 'Location information is unavailable.';
-                            break;
-                        case error.TIMEOUT:
-                            errorMessage = 'Location request timed out.';
-                            break;
-                        default:
-                            errorMessage = 'An unknown error occurred while retrieving location.';
-                            break;
-                    }
-                    
-                    showError(errorMessage);
-                },
-                options
-            );
+        try {
+            sunriseTime = calculateSunriseForLocation(currentLocation.lat, currentLocation.lng);
+
+            document.getElementById('locationDisplay').innerHTML = `
+                <p>📍 Location: ${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}</p>
+                <p>🌅 Sunrise: ${sunriseTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                <p><small>Automatically calculated</small></p>
+            `;
+
+            initializeSchedule(); // <-- auto-starts the schedule
+        } catch (error) {
+            console.error('Sunrise calculation failed:', error);
+            showError('Could not calculate sunrise. Try manual entry.');
+        }
+    },
+    function(error) {
+        showError('Could not get location: ' + error.message);
+    }
+);
+
         }
 
         function setManualSunrise() {
@@ -391,20 +441,8 @@
             initializeSchedule();
         }
 
-        function calculateSunrise() {
-            const now = new Date();
-            const sunrise = getSunrise(currentLocation.lat, currentLocation.lng, now);
-            sunriseTime = sunrise;
-            
-            document.getElementById('locationDisplay').innerHTML = `
-                <p>📍 ${currentLocation.lat.toFixed(2)}, ${currentLocation.lng.toFixed(2)}</p>
-                <p>🌅 Today's sunrise: ${sunrise.toLocaleTimeString()}</p>
-            `;
-            
-            initializeSchedule();
-        }
-
         function initializeSchedule() {
+            console.log('initializeSchedule called with sunriseTime:', sunriseTime);
             generateSchedule();
             updateCurrentTattva();
             hideElement('loading');
@@ -418,9 +456,8 @@
             updateInterval = setInterval(updateCurrentTattva, 60000);
         }
 
-
-
         function generateSchedule() {
+            console.log('generateSchedule called, using sunrise time:', sunriseTime);
             scheduleData = [];
             let currentTime = new Date(sunriseTime);
             
@@ -446,6 +483,7 @@
                 }
             }
             
+            console.log('Generated schedule data, first item starts at:', scheduleData[0]?.startTime);
             renderSchedule();
         }
 
